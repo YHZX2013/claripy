@@ -1,6 +1,7 @@
 import binascii
 import logging
 import numbers
+from past.builtins import long, unicode
 
 from .bits import Bits
 from ..ast.base import _make_name
@@ -123,8 +124,8 @@ class BV(Bits):
         return BVV(value, like.length)
 
     @staticmethod
-    def _from_bytes(like, value): #pylint:disable=unused-argument
-        return BVV(value)
+    def _from_long(like, value):
+        return BVV(value, like.length)
 
     @staticmethod
     def _from_str(like, value): #pylint:disable=unused-argument
@@ -199,9 +200,9 @@ def BVS(name, size, min=None, max=None, stride=None, uninitialized=False,  #pyli
         raise ClaripyValueError("BVSes of stride 0 should have max == min")
 
     encoded_name = None
-    if type(name) is bytes:
+    if type(name) is unicode:
         encoded_name = name
-        name = name.decode()
+        name = name.encode('utf-8')
     if type(name) is not str:
         raise TypeError("Name value for BVS must be a str, got %r" % type(name))
 
@@ -225,21 +226,21 @@ def BVV(value, size=None, **kwargs):
     :returns:       A BV object representing this value.
     """
 
-    if type(value) in (bytes, str):
-        if type(value) is str:
+    if type(value) in (unicode, str):
+        if type(value) is unicode:
             l.warning("BVV value is a unicode string, encoding as utf-8")
             value = value.encode('utf-8')
 
         if size is None:
             size = len(value)*8
-        elif type(size) is not int:
+        elif type(size) is not in (long, int):
             raise TypeError("Bitvector size  must be either absent (implicit) or an integer")
         elif size != len(value)*8:
             raise ClaripyValueError('string/size mismatch for BVV creation')
 
-        value = int(binascii.hexlify(value), 16) if value != b"" else 0
+        value = int(binascii.hexlify(value), 16) if value != "" else 0
 
-    elif size is None or (type(value) is not int and value is not None):
+    elif size is None or (type(value) is not in (long, int) and value is not None):
         raise TypeError('BVV() takes either an integer value and a size or a string of bytes')
 
     # ensure the 0 <= value < (1 << size)
@@ -334,11 +335,11 @@ SMod = operations.op('SMod', (BV, BV), BV, extra_check=operations.length_same_ch
 # bit stuff
 LShR = operations.op('LShR', (BV, BV), BV, extra_check=operations.length_same_check,
                      calc_length=operations.basic_length_calc, bound=False)
-SignExt = operations.op('SignExt', (int, BV), BV,
+SignExt = operations.op('SignExt', ((long, int), BV), BV,
                         calc_length=operations.ext_length_calc, bound=False)
-ZeroExt = operations.op('ZeroExt', (int, BV), BV,
+ZeroExt = operations.op('ZeroExt', ((long, int), BV), BV,
                         calc_length=operations.ext_length_calc, bound=False)
-Extract = operations.op('Extract', (int, int, BV),
+Extract = operations.op('Extract', ((long, int), (long, int), BV),
                         BV, extra_check=operations.extract_check,
                         calc_length=operations.extract_length_calc, bound=False)
 
@@ -414,7 +415,7 @@ BV.__rshift__ = operations.op('__rshift__', (BV, BV), BV, extra_check=operations
 BV.__rrshift__ = operations.reversed_op(BV.__rshift__)
 BV.LShR = operations.op('LShR', (BV, BV), BV, extra_check=operations.length_same_check, calc_length=operations.basic_length_calc)
 
-BV.Extract = staticmethod(operations.op('Extract', (int, int, BV), BV, extra_check=operations.extract_check, calc_length=operations.extract_length_calc, bound=False))
+BV.Extract = staticmethod(operations.op('Extract', ((long, int), (long, int), BV), BV, extra_check=operations.extract_check, calc_length=operations.extract_length_calc, bound=False))
 BV.Concat = staticmethod(operations.op('Concat', BV, BV, calc_length=operations.concat_length_calc, bound=False))
 BV.reversed = property(operations.op('Reverse', (BV,), BV, calc_length=operations.basic_length_calc))
 
