@@ -4,6 +4,7 @@ import operator
 import threading
 
 import logging
+from ..utils.transition import raise_from
 l = logging.getLogger('claripy.backend')
 
 class Backend(object):
@@ -200,7 +201,7 @@ class Backend(object):
                         arg_queue.append(r)
 
         except (RuntimeError, ctypes.ArgumentError) as e:
-            raise ClaripyRecursionError("Recursion limit reached. Sorry about that.") from e
+            raise_from(ClaripyRecursionError("_fromRecursion limit reached. Sorry about that."), e)
 
         except BackendError:
             for ast in op_queue:
