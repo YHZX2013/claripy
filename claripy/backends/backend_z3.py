@@ -10,6 +10,7 @@ import weakref
 from functools import reduce
 from decimal import Decimal
 
+from ..utils.transition import raise_from
 from ..errors import ClaripyZ3Error
 
 l = logging.getLogger("claripy.backends.backend_z3")
@@ -57,7 +58,7 @@ def condom(f):
         try:
             return f(*args, **kwargs)
         except z3.Z3Exception as ze:
-            raise ClaripyZ3Error() from ze
+            raise_from(ClaripyZ3Error("Z3Exception: %s" % ze), ze)
     return z3_condom
 
 def _raw_caller(f):
