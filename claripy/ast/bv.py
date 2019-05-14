@@ -233,14 +233,14 @@ def BVV(value, size=None, **kwargs):
 
         if size is None:
             size = len(value)*8
-        elif type(size) is not in (long, int):
+        elif type(size) not in (long, int):
             raise TypeError("Bitvector size  must be either absent (implicit) or an integer")
         elif size != len(value)*8:
             raise ClaripyValueError('string/size mismatch for BVV creation')
 
         value = int(binascii.hexlify(value), 16) if value != "" else 0
 
-    elif size is None or (type(value) is not in (long, int) and value is not None):
+    elif size is None or (type(value) not in (long, int) and value is not None):
         raise TypeError('BVV() takes either an integer value and a size or a string of bytes')
 
     # ensure the 0 <= value < (1 << size)
